@@ -1,5 +1,4 @@
 # Editors
-.vscode/
 .idea/
 
 # Vagrant
@@ -123,3 +122,7 @@ venv.bak/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+replays/
+recordings/
+archive_/
