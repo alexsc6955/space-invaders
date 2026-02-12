@@ -1051,9 +1051,7 @@ class BulletShipCollisionSystem:
         if w.shield_active:
             return  # shield handles it
 
-        ship_collider = RectCollider(
-            ship.body.position, ship.body.size
-        )
+        ship_collider = RectCollider(ship.body.position, ship.body.size)
 
         for b in w.bullets:
             if not b.alive or b.owner != "alien":
@@ -1606,10 +1604,7 @@ class SpaceInvadersScene(SimScene[SpaceInvadersTickContext]):
 
     world: SpaceInvadersWorld
     _tex_cache: dict[str, int]
-
-    def __init__(self, ctx: RuntimeContext):
-        super().__init__(ctx)
-        self.systems = SystemPipeline[SpaceInvadersTickContext]()
+    tick_context_type = SpaceInvadersTickContext
 
     def on_enter(self):
         # Add cheats
