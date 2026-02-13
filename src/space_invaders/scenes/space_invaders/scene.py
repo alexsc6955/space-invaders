@@ -28,7 +28,7 @@ from mini_arcade_core.scenes.sim_scene import (  # pyright: ignore[reportMissing
     SimScene,
 )
 from mini_arcade_core.scenes.systems.builtins import (
-    BaseInputSystem,
+    InputIntentSystem,
     BaseRenderSystem,
 )
 from mini_arcade_core.scenes.systems.system_pipeline import SystemPipeline
@@ -179,7 +179,7 @@ class SpaceInvadersTickContext(
 
 
 @dataclass
-class SpaceInvadersInputSystem(BaseInputSystem):
+class SpaceInvadersInputSystem(InputIntentSystem):
     """
     Process input and update intent.
     """
