@@ -4,6 +4,8 @@ Minimal main application for Space Invaders using mini-arcade-core and pygame ba
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from mini_arcade_core import (  # pyright: ignore[reportMissingImports]
     GameConfig,
     SceneRegistry,
@@ -22,9 +24,26 @@ from mini_arcade_native_backend import (  # pyright: ignore[reportMissingImports
     NativeBackendSettings,
 )
 
-from space_invaders.constants import ASSETS_ROOT, FPS, WINDOW_SIZE
+from space_invaders.constants import FPS, WINDOW_SIZE
 
 # pylint: enable=no-name-in-module
+
+
+def _default_system_font() -> str | None:
+    """
+    Return a readable system font path for the native backend.
+    """
+    candidates = [
+        Path("C:/Windows/Fonts/segoeui.ttf"),
+        Path("C:/Windows/Fonts/arial.ttf"),
+        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+        Path("/usr/share/fonts/dejavu/DejaVuSans.ttf"),
+        Path("/System/Library/Fonts/Supplemental/Arial.ttf"),
+    ]
+    for path in candidates:
+        if path.exists():
+            return str(path)
+    return None
 
 
 def run():
@@ -32,15 +51,12 @@ def run():
     Main entry point for Space Invaders.
 
     - Auto-discovers scenes from the `space_invaders.scenes` package.
-    - Configures the pygame backend with the Space Invaders font.
     - Sets up the game window with specified dimensions and background color.
-    - Runs the game with the initial scene set to "menu".
+    - Runs the game with the initial scene set to "space_invaders_menu".
     """
     scene_registry = SceneRegistry(_factories={}).discover(
         "space_invaders.scenes", "mini_arcade_core.scenes"
     )
-
-    font_path = ASSETS_ROOT / "fonts" / "pixel_arial_11" / "PIXEAB__.TTF"
 
     w_width, w_height = WINDOW_SIZE
 
@@ -55,16 +71,24 @@ def run():
             "resizable": True,
         },
         "renderer": {"background_color": (30, 30, 30)},
-        "fonts": [{"name": "default", "path": str(font_path), "size": 24}],
         "audio": {
             "enable": False,
         },
     }
+    font_path = _default_system_font()
+    if font_path is not None:
+        settings_data["fonts"] = [
+            {"name": "default", "path": font_path, "size": 24}
+        ]
+    else:
+        logger.warning(
+            "No system font found; UI text may not render on native backend."
+        )
     backend_settings = NativeBackendSettings.from_dict(settings_data)
     backend = NativeBackend(settings=backend_settings)
 
     game_config = GameConfig(
-        initial_scene="space_invaders",
+        initial_scene="space_invaders_menu",
         fps=FPS,
         backend=backend,
     )

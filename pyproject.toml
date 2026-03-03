@@ -70,4 +70,9 @@ include = [
 ]
 
 [project.scripts]
-deja-bounce = "deja_bounce.app:run"
+space-invaders = "space_invaders.app:run"
+
+[tool.mini-arcade.game]
+id = "space-invaders"
+entrypoint = "manage.py"
+source_roots = ["src"]
