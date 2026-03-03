@@ -4,8 +4,9 @@ Space Invaders utils
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
+
+from mini_arcade_core.utils import find_assets_root as _find_assets_root
 
 
 def find_assets_root() -> Path:
@@ -18,20 +19,4 @@ def find_assets_root() -> Path:
 
     :raises FileNotFoundError: If the assets directory cannot be found.
     """
-    # 1) PyInstaller onefile support
-    # pylint: disable=protected-access
-    if hasattr(sys, "_MEIPASS"):
-        base = Path(sys._MEIPASS)
-        candidate = base / "assets"
-        if candidate.is_dir():
-            return candidate
-    # pylint: enable=protected-access
-
-    # 2) Dev / pip-installed: walk upwards and look for an `assets` folder
-    here = Path(__file__).resolve()
-    for parent in here.parents:
-        candidate = parent / "assets"
-        if candidate.is_dir():
-            return candidate
-
-    raise FileNotFoundError("Could not locate 'assets' directory.")
+    return _find_assets_root(__file__)

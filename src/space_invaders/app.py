@@ -91,6 +91,7 @@ def run():
         initial_scene="space_invaders_menu",
         fps=FPS,
         backend=backend,
+        virtual_resolution=WINDOW_SIZE,
     )
     logger.info("Starting Space Invaders...")
     logger.info(backend_settings.to_dict())

@@ -10,12 +10,17 @@ from dataclasses import dataclass
 
 from mini_arcade_core.backend.keys import Key
 from mini_arcade_core.engine.animation import Animation
-from mini_arcade_core.engine.commands import ToggleVideoRecordCommand
 from mini_arcade_core.engine.components import Anim2D
+from mini_arcade_core.runtime.services import RuntimeServices
 from mini_arcade_core.scenes.sim_scene import DrawCall
 from mini_arcade_core.scenes.systems.builtins import (
+    ActionIntentSystem,
+    ActionMap,
+    AxisActionBinding,
     BaseQueuedRenderSystem,
-    InputIntentSystem,
+    CaptureHotkeysConfig,
+    CaptureHotkeysSystem,
+    DigitalActionBinding,
 )
 from mini_arcade_core.spaces.collision.intersections import (
     intersects_entities,
@@ -56,52 +61,63 @@ from space_invaders.scenes.space_invaders.models import (
 )
 
 
-@dataclass
-class SpaceInvadersInputSystem(InputIntentSystem):
+SPACE_INVADERS_ACTIONS = ActionMap(
+    bindings={
+        "move_ship_x": AxisActionBinding(
+            positive_keys=(Key.RIGHT,),
+            negative_keys=(Key.LEFT,),
+        ),
+        "fire_bullet": DigitalActionBinding(keys=(Key.SPACE,)),
+        "fire_omega_ray": DigitalActionBinding(keys=(Key.O,)),
+        "toggle_missile_target": DigitalActionBinding(keys=(Key.T,)),
+        "missile_target_left": DigitalActionBinding(keys=(Key.A,)),
+        "missile_target_right": DigitalActionBinding(keys=(Key.D,)),
+        "missile_target_up": DigitalActionBinding(keys=(Key.W,)),
+        "missile_target_down": DigitalActionBinding(keys=(Key.S,)),
+        "missile_launch": DigitalActionBinding(keys=(Key.M,)),
+        "shield_toggle": DigitalActionBinding(keys=(Key.C,)),
+        "ship_kill_switch": DigitalActionBinding(keys=(Key.K,)),
+        "pause": DigitalActionBinding(keys=(Key.ESCAPE,)),
+        "capture_toggle_video": DigitalActionBinding(keys=(Key.R,)),
+    }
+)
+
+
+def _build_space_invaders_intent(
+    actions,
+    _ctx: SpaceInvadersTickContext,
+) -> SpaceInvadersIntent:
+    move = actions.value("move_ship_x")
+    return SpaceInvadersIntent(
+        move_ship_left=max(0.0, -move),
+        move_ship_right=max(0.0, move),
+        fire_bullet=actions.pressed("fire_bullet"),
+        fire_omega_ray=actions.pressed("fire_omega_ray"),
+        toggle_missile_target=actions.pressed("toggle_missile_target"),
+        missile_target_left=actions.pressed("missile_target_left"),
+        missile_target_right=actions.pressed("missile_target_right"),
+        missile_target_up=actions.pressed("missile_target_up"),
+        missile_target_down=actions.pressed("missile_target_down"),
+        missile_launch=actions.pressed("missile_launch"),
+        shield_toggle=actions.pressed("shield_toggle"),
+        pause=actions.pressed("pause"),
+        ship_kill_switch=actions.pressed("ship_kill_switch"),
+        toggle_video_recording=actions.pressed("capture_toggle_video"),
+    )
+
+
+class SpaceInvadersInputSystem(
+    ActionIntentSystem[SpaceInvadersTickContext, SpaceInvadersIntent]
+):
     """
     Process input and update intent.
     """
 
-    name: str = "space_invaders_input"
-
-    def step(self, ctx: SpaceInvadersTickContext):
-        """Process input and update intent."""
-        key_down = ctx.input_frame.keys_down
-        key_pressed = ctx.input_frame.keys_pressed
-
-        # Ship controls
-        move_ship_left = 1.0 if Key.LEFT in key_down else 0.0
-        move_ship_right = 1.0 if Key.RIGHT in key_down else 0.0
-        fire_bullet = Key.SPACE in key_pressed
-        fire_omega_ray = Key.O in key_pressed
-        toggle_missile_target = Key.T in key_pressed
-        missile_target_left = Key.A in key_pressed  # or Key.LEFT if you want
-        missile_target_right = Key.D in key_pressed
-        missile_launch = Key.M in key_pressed
-        missile_target_up = Key.W in key_pressed
-        missile_target_down = Key.S in key_pressed
-        shield_toggle = Key.C in key_pressed
-        ship_kill_switch = Key.K in key_pressed
-        pause = Key.ESCAPE in key_pressed
-
-        # Misc hotkeys
-        toggle_video_recording = Key.R in key_pressed
-
-        ctx.intent = SpaceInvadersIntent(
-            move_ship_left=move_ship_left,
-            move_ship_right=move_ship_right,
-            fire_bullet=fire_bullet,
-            fire_omega_ray=fire_omega_ray,
-            toggle_missile_target=toggle_missile_target,
-            missile_target_left=missile_target_left,
-            missile_target_right=missile_target_right,
-            missile_launch=missile_launch,
-            missile_target_up=missile_target_up,
-            missile_target_down=missile_target_down,
-            shield_toggle=shield_toggle,
-            pause=pause,
-            ship_kill_switch=ship_kill_switch,
-            toggle_video_recording=toggle_video_recording,
+    def __init__(self):
+        super().__init__(
+            action_map=SPACE_INVADERS_ACTIONS,
+            intent_factory=_build_space_invaders_intent,
+            name="space_invaders_input",
         )
 
 
@@ -148,8 +164,22 @@ class SpaceInvadersHotkeysSystem:
                 ship.life = None
                 ship.exploding = False
 
-        if ctx.intent.toggle_video_recording:
-            ctx.commands.push(ToggleVideoRecordCommand())
+
+def build_space_invaders_capture_hotkeys_system(
+    services: RuntimeServices,
+) -> CaptureHotkeysSystem:
+    """
+    Shared capture bindings for Space Invaders.
+    """
+    return CaptureHotkeysSystem(
+        services=services,
+        action_map=SPACE_INVADERS_ACTIONS,
+        cfg=CaptureHotkeysConfig(
+            screenshot_label=None,
+            replay_file=None,
+            action_toggle_video="capture_toggle_video",
+        ),
+    )
 
 
 @dataclass

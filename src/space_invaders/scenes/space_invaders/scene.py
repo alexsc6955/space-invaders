@@ -56,6 +56,7 @@ from space_invaders.scenes.space_invaders.systems import (
     SpaceInvadersInputSystem,
     SpaceInvadersPauseSystem,
     SpaceInvadersRenderSystem,
+    build_space_invaders_capture_hotkeys_system,
     UfoCollisionSystem,
     UfoSystem,
 )
@@ -285,6 +286,9 @@ class SpaceInvadersScene(
                 SpaceInvadersInputSystem(),
                 SpaceInvadersPauseSystem(),
                 SpaceInvadersHotkeysSystem(),
+                build_space_invaders_capture_hotkeys_system(
+                    self.context.services
+                ),
                 ShieldSystem(),
                 MissileTargetSystem(),
                 ShipSystem(),
