@@ -75,7 +75,6 @@ class SpaceInvadersScene(
     tick_context_type = SpaceInvadersTickContext
 
     def on_enter(self):
-        # Add cheats
         # Justification: window typer is protocol, mypy can't infer correctly
         # pylint: disable=assignment-from-no-return
         vw, vh = self.context.services.window.get_virtual_size()

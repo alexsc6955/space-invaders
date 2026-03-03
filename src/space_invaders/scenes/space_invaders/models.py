@@ -116,8 +116,6 @@ class SpaceInvadersIntent(BaseIntent):
 
     ship_kill_switch: bool = False  # for testing, kills player instantly
 
-    toggle_video_recording: bool = False
-
 
 @dataclass
 class SpaceInvadersTickContext(

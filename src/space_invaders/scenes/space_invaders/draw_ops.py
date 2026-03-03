@@ -1,5 +1,5 @@
 """
-Custom DrawOps for Space Invaders overlays and HUD.
+Custom DrawOps for Space Invaders overlays.
 """
 
 from __future__ import annotations
@@ -11,25 +11,6 @@ from space_invaders.entities import Alien, EntityId, Ship
 from space_invaders.scenes.space_invaders.models import (
     SpaceInvadersTickContext,
 )
-
-
-def _draw_text(
-    backend: Backend,
-    *,
-    x: float,
-    y: float,
-    text: str,
-    color=(255, 255, 255, 255),
-    align: str = "left",
-) -> None:
-    draw_x = int(x)
-    if align in ("center", "right"):
-        text_w, _ = backend.text.measure(text)
-        if align == "center":
-            draw_x -= text_w // 2
-        else:
-            draw_x -= text_w
-    backend.text.draw(draw_x, int(y), text, color=color)
 
 
 class DrawShieldOverlay(Drawable[SpaceInvadersTickContext]):
@@ -396,58 +377,3 @@ class DrawRegionTint(Drawable[SpaceInvadersTickContext]):
         finally:
             backend.render.destroy_texture(tex)
 
-
-class DrawHud(Drawable[SpaceInvadersTickContext]):
-    """
-    Draw score/lives/round state HUD text.
-    """
-
-    def draw(self, backend: Backend, ctx: SpaceInvadersTickContext) -> None:
-        w = ctx.world
-        vw, vh = w.viewport
-
-        _draw_text(
-            backend,
-            x=12,
-            y=12,
-            text=f"SCORE {int(w.score):05d}",
-            color=(255, 255, 255, 255),
-        )
-        _draw_text(
-            backend,
-            x=vw - 12,
-            y=12,
-            text=f"LIVES {int(w.lives)}",
-            color=(255, 255, 255, 255),
-            align="right",
-        )
-        aliens_left = len(
-            w.get_entities_by_id_range(EntityId.ALIEN_START, EntityId.ALIEN_END)
-        )
-        _draw_text(
-            backend,
-            x=vw * 0.5,
-            y=12,
-            text=f"ALIENS {aliens_left}",
-            color=(160, 200, 255, 255),
-            align="center",
-        )
-
-        if w.game_over:
-            _draw_text(
-                backend,
-                x=vw * 0.5,
-                y=vh * 0.5,
-                text="GAME OVER",
-                color=(255, 80, 80, 255),
-                align="center",
-            )
-        elif w.victory:
-            _draw_text(
-                backend,
-                x=vw * 0.5,
-                y=vh * 0.5,
-                text="YOU WIN",
-                color=(80, 255, 140, 255),
-                align="center",
-            )

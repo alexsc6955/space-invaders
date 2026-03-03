@@ -102,7 +102,6 @@ def _build_space_invaders_intent(
         shield_toggle=actions.pressed("shield_toggle"),
         pause=actions.pressed("pause"),
         ship_kill_switch=actions.pressed("ship_kill_switch"),
-        toggle_video_recording=actions.pressed("capture_toggle_video"),
     )
 
 
@@ -136,7 +135,7 @@ class SpaceInvadersPauseSystem:
 
 @dataclass
 class SpaceInvadersHotkeysSystem:
-    """Handles one-shot hotkeys (trail toggle, screenshot, etc.)."""
+    """Handles gameplay-specific hotkeys and lifecycle side effects."""
 
     name: str = "space_invaders_hotkeys"
     order: int = 13  # after pause (12) or right after input (10/11)
