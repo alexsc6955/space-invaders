@@ -2,12 +2,14 @@
 Custom DrawOps for Space Invaders overlays.
 """
 
+# pylint: disable=too-many-arguments,too-many-locals
+
 from __future__ import annotations
 
 from mini_arcade_core.backend import Backend
 from mini_arcade_core.scenes.sim_scene import Drawable
 
-from space_invaders.entities import Alien, EntityId, Ship
+from space_invaders.entities import Alien, Ship
 from space_invaders.scenes.space_invaders.models import (
     SpaceInvadersTickContext,
 )
@@ -23,7 +25,7 @@ class DrawShieldOverlay(Drawable[SpaceInvadersTickContext]):
         if not w.shield_active or w.shield_anim is None:
             return
 
-        ship: Ship | None = w.get_entity_by_id(EntityId.SHIP)
+        ship: Ship | None = w.ship()
         if ship is None or getattr(ship, "exploding", False):
             return
 
@@ -71,7 +73,7 @@ class DrawOmegaRay(Drawable[SpaceInvadersTickContext]):
         if w.omega_x is None:
             return
 
-        ship: Ship | None = w.get_entity_by_id(EntityId.SHIP)
+        ship: Ship | None = w.ship()
         if ship is None:
             return
 
@@ -89,8 +91,10 @@ class DrawOmegaRay(Drawable[SpaceInvadersTickContext]):
             )
             return
 
-        if not (
-            w.omega_active and w.omega_beam_anim and w.omega_beam_large_anim
+        if (
+            not w.omega_active
+            or not w.omega_beam_anim
+            or not w.omega_beam_large_anim
         ):
             return
 
@@ -126,12 +130,10 @@ class DrawMissileTarget(Drawable[SpaceInvadersTickContext]):
         if not w.missile_targeting or w.target_texture is None:
             return
 
-        aliens: list[Alien] = w.get_entities_by_id_range(
-            EntityId.ALIEN_START, EntityId.ALIEN_END
-        )
+        aliens: list[Alien] = w.aliens()
         alive = [a for a in aliens if not getattr(a, "exploding", False)]
         idx = w.missile_target_idx
-        if not alive or idx is None or not (0 <= idx < len(alive)):
+        if not alive or idx is None or idx < 0 or idx >= len(alive):
             return
 
         alien = alive[idx]
@@ -166,7 +168,9 @@ class DrawRegionTint(Drawable[SpaceInvadersTickContext]):
     _bg_delta_threshold = 18
 
     @staticmethod
-    def _clamp_band(top: float, bottom: float, height: float) -> tuple[int, int]:
+    def _clamp_band(
+        top: float, bottom: float, height: float
+    ) -> tuple[int, int]:
         y0 = max(0.0, min(height, top))
         y1 = max(0.0, min(height, bottom))
         if y1 <= y0:
@@ -237,8 +241,10 @@ class DrawRegionTint(Drawable[SpaceInvadersTickContext]):
                 sr = cap[si + ri]
                 sg = cap[si + gi]
                 sb = cap[si + bi]
-                delta = abs(int(sr) - bg_r) + abs(int(sg) - bg_g) + abs(
-                    int(sb) - bg_b
+                delta = (
+                    abs(int(sr) - bg_r)
+                    + abs(int(sg) - bg_g)
+                    + abs(int(sb) - bg_b)
                 )
                 if delta <= cls._bg_delta_threshold:
                     continue
@@ -288,7 +294,7 @@ class DrawRegionTint(Drawable[SpaceInvadersTickContext]):
             return
 
         # UFO top-lane tint (red): draw full-width band where UFO travels.
-        ufo = w.get_entity_by_id(EntityId.UFO)
+        ufo = w.ufo()
         if ufo is not None:
             _, uy = ufo.transform.center.to_tuple()
             _, uh = ufo.transform.size.to_tuple()
@@ -296,14 +302,14 @@ class DrawRegionTint(Drawable[SpaceInvadersTickContext]):
             ufo_bottom = uy + uh + self._padding
         else:
             ufo_top = self._ufo_fallback_y - self._padding
-            ufo_bottom = self._ufo_fallback_y + self._ufo_fallback_h + self._padding
+            ufo_bottom = (
+                self._ufo_fallback_y + self._ufo_fallback_h + self._padding
+            )
 
         ufo_y, ufo_h = self._clamp_band(ufo_top, ufo_bottom, vh)
 
         # Shelter lane tint (green): full-width band around shelters.
-        shelters = w.get_entities_by_id_range(
-            EntityId.SHELTER_START, EntityId.SHELTER_END
-        )
+        shelters = w.shelters()
         if shelters:
             min_y = float("inf")
             max_y = 0.0
@@ -316,11 +322,13 @@ class DrawRegionTint(Drawable[SpaceInvadersTickContext]):
             shelter_bottom = max_y + self._padding
         else:
             shelter_top = (vh * self._shelter_fallback_y_ratio) - self._padding
-            shelter_bottom = shelter_top + self._shelter_fallback_h + (
-                self._padding * 2.0
+            shelter_bottom = (
+                shelter_top + self._shelter_fallback_h + (self._padding * 2.0)
             )
 
-        shelter_y, shelter_h = self._clamp_band(shelter_top, shelter_bottom, vh)
+        shelter_y, shelter_h = self._clamp_band(
+            shelter_top, shelter_bottom, vh
+        )
         if ufo_h <= 0 and shelter_h <= 0:
             return
 
@@ -376,4 +384,3 @@ class DrawRegionTint(Drawable[SpaceInvadersTickContext]):
             backend.render.draw_texture(tex, 0, 0, vw, vh)
         finally:
             backend.render.destroy_texture(tex)
-

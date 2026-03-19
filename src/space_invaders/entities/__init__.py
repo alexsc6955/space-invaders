@@ -1,22 +1,23 @@
-"""
-Space Invaders Scene
-"""
+"""Entity definitions for the Space Invaders game."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum, IntEnum
-from typing import Literal
+from typing import Any, Literal
 
 from mini_arcade_core.engine.animation import Animation
 from mini_arcade_core.engine.components import Anim2D, Life
 from mini_arcade_core.engine.entities import BaseEntity
+from mini_arcade_core.scenes.entity_blueprints import build_entity_payload
 from mini_arcade_core.spaces.geometry.bounds import Position2D, Size2D
 
 # from mini_arcade_core.engine.entities.sprite import AnimSprite2D, Sprite2D
 
 
 class EntityId(IntEnum):
+    """Reserved entity-id ranges for world-managed entity types."""
+
     SHIP = 1
     UFO = 2
     ALIEN_START = 100
@@ -29,8 +30,29 @@ class EntityId(IntEnum):
     SHELTER_END = 499
 
 
+def _payload_from_template(
+    template: dict[str, Any],
+    *,
+    viewport: tuple[float, float],
+    entity_id: int,
+    name: str,
+    overrides: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    return build_entity_payload(
+        template,
+        viewport=viewport,
+        overrides={
+            "id": int(entity_id),
+            "name": name,
+            **(overrides or {}),
+        },
+    )
+
+
 @dataclass
 class Effect:
+    """Transient sprite-only effect tracked outside the entity list."""
+
     position: Position2D
     size: Size2D
     texture: int  # single sprite (no anim)
@@ -50,6 +72,7 @@ class Ship(BaseEntity):
     explode_timer: float = 0.0
 
     @staticmethod
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def build(
         entity_id: EntityId,
         name: str,
@@ -81,13 +104,42 @@ class Ship(BaseEntity):
                 "sprite": {
                     "texture": texture,
                 },
+                "tags": ["ship", "player"],
             }
         )
         ship.ship_explosion_frames = ship_explosion_frames
+        ship.tags = tuple(dict.fromkeys((*ship.tags, "ship", "player")))
+        return ship
+
+    @staticmethod
+    def build_from_template(
+        *,
+        template: dict[str, Any],
+        viewport: tuple[float, float],
+        entity_id: int,
+        name: str,
+        overrides: dict[str, Any] | None = None,
+    ) -> "Ship":
+        """Build a ship instance from a resolved entity template."""
+        payload = _payload_from_template(
+            template,
+            viewport=viewport,
+            entity_id=entity_id,
+            name=name,
+            overrides=overrides,
+        )
+        ship: Ship = Ship.from_dict(payload)
+        ship.ship_explosion_frames = list(
+            payload.get("ship_explosion_frames", []) or []
+        )
+        ship.exploding = False
+        ship.explode_timer = 0.0
+        ship.tags = tuple(dict.fromkeys((*ship.tags, "ship", "player")))
         return ship
 
     @staticmethod
     def start_explosion(ship: BaseEntity, frames: list[int]) -> None:
+        """Attach the one-shot ship explosion animation and lifetime."""
         if not frames or ship.anim is not None:
             return
         ship.anim = Anim2D(
@@ -147,6 +199,7 @@ class Alien(BaseEntity):
                     "fps": 5.0,
                     "loop": True,
                 },
+                "tags": ["alien"],
             }
         )
         alien.fire_cd = 2.0 + 3.0 * (entity_id - EntityId.ALIEN_START) / (
@@ -156,6 +209,37 @@ class Alien(BaseEntity):
         alien.explode_timer = 0.0
         alien.col = (entity_id - EntityId.ALIEN_START) % 11
         alien.row = (entity_id - EntityId.ALIEN_START) // 11
+        alien.tags = tuple(dict.fromkeys((*alien.tags, "alien")))
+        return alien
+
+    @staticmethod
+    # pylint: disable=too-many-arguments
+    def build_from_template(
+        *,
+        template: dict[str, Any],
+        viewport: tuple[float, float],
+        entity_id: int,
+        name: str,
+        row: int,
+        col: int,
+        fire_cd: float = 0.0,
+        overrides: dict[str, Any] | None = None,
+    ) -> "Alien":
+        """Build an alien with row/column metadata from a template."""
+        payload = _payload_from_template(
+            template,
+            viewport=viewport,
+            entity_id=entity_id,
+            name=name,
+            overrides=overrides,
+        )
+        alien: Alien = Alien.from_dict(payload)
+        alien.fire_cd = float(fire_cd)
+        alien.exploding = False
+        alien.explode_timer = 0.0
+        alien.row = int(row)
+        alien.col = int(col)
+        alien.tags = tuple(dict.fromkeys((*alien.tags, "alien")))
         return alien
 
 
@@ -173,6 +257,7 @@ class Ufo(BaseEntity):
         texture: int,
         travel_dir: float,
     ) -> "Ufo":
+        """Build a UFO entity with its travel direction preset."""
         ufo: Ufo = Ufo.from_dict(
             {
                 "id": entity_id,
@@ -198,10 +283,38 @@ class Ufo(BaseEntity):
                 "life": {
                     "alive": True,
                 },
+                "tags": ["ufo"],
             }
         )
         ufo.travel_dir = 1.0 if travel_dir >= 0 else -1.0
         ufo.points = 100
+        ufo.tags = tuple(dict.fromkeys((*ufo.tags, "ufo")))
+        return ufo
+
+    @staticmethod
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
+    def build_from_template(
+        *,
+        template: dict[str, Any],
+        viewport: tuple[float, float],
+        entity_id: int,
+        name: str,
+        travel_dir: float,
+        points: int,
+        overrides: dict[str, Any] | None = None,
+    ) -> "Ufo":
+        """Build a configured UFO entity from a template payload."""
+        payload = _payload_from_template(
+            template,
+            viewport=viewport,
+            entity_id=entity_id,
+            name=name,
+            overrides=overrides,
+        )
+        ufo: Ufo = Ufo.from_dict(payload)
+        ufo.travel_dir = 1.0 if travel_dir >= 0 else -1.0
+        ufo.points = int(points)
+        ufo.tags = tuple(dict.fromkeys((*ufo.tags, "ufo")))
         return ufo
 
 
@@ -209,6 +322,8 @@ BulletOwner = Literal["ship", "alien"]
 
 
 class ProjectileKind(str, Enum):
+    """Projectile animation families used by alien bullet rows."""
+
     A = "A"
     B = "B"
     C = "C"
@@ -216,6 +331,8 @@ class ProjectileKind(str, Enum):
 
 @dataclass(frozen=True)
 class ProjectileSpec:
+    """Resolved runtime data for one projectile kind."""
+
     kind: ProjectileKind
     frames: tuple[int, int, int, int]  # 4 textures
     fps: float
@@ -231,6 +348,7 @@ class Bullet(BaseEntity):
     owner: BulletOwner
 
     @staticmethod
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def build(
         entity_id: EntityId,
         name: str,
@@ -260,9 +378,39 @@ class Bullet(BaseEntity):
                     "ttl": 5.0,  # seconds
                     "alive": True,
                 },
+                "tags": ["bullet", f"{owner}_bullet"],
             }
         )
         bullet.owner = owner
+        bullet.tags = tuple(
+            dict.fromkeys((*bullet.tags, "bullet", f"{owner}_bullet"))
+        )
+        return bullet
+
+    @staticmethod
+    # pylint: disable=too-many-arguments
+    def build_from_template(
+        *,
+        template: dict[str, Any],
+        viewport: tuple[float, float],
+        entity_id: int,
+        name: str,
+        owner: BulletOwner,
+        overrides: dict[str, Any] | None = None,
+    ) -> "Bullet":
+        """Build a bullet and preserve owner-specific tagging metadata."""
+        payload = _payload_from_template(
+            template,
+            viewport=viewport,
+            entity_id=entity_id,
+            name=name,
+            overrides=overrides,
+        )
+        bullet: Bullet = Bullet.from_dict(payload)
+        bullet.owner = owner
+        bullet.tags = tuple(
+            dict.fromkeys((*bullet.tags, "bullet", f"{owner}_bullet"))
+        )
         return bullet
 
 
@@ -282,6 +430,7 @@ class Missile(BaseEntity):
         y: float,
         texture: int | None = None,
     ) -> Missile:
+        """Build a missile entity with default homing parameters."""
         missile: Missile = Missile.from_dict(
             {
                 "id": entity_id,
@@ -308,21 +457,48 @@ class Missile(BaseEntity):
                     "ttl": 6.0,
                     "alive": True,
                 },
+                "tags": ["missile"],
             }
         )
         missile.target_id = None
         missile.speed = 420.0
+        missile.tags = tuple(dict.fromkeys((*missile.tags, "missile")))
+        return missile
+
+    @staticmethod
+    def build_from_template(
+        *,
+        template: dict[str, Any],
+        viewport: tuple[float, float],
+        entity_id: int,
+        name: str,
+        overrides: dict[str, Any] | None = None,
+    ) -> "Missile":
+        """Build a missile entity from a resolved template payload."""
+        payload = _payload_from_template(
+            template,
+            viewport=viewport,
+            entity_id=entity_id,
+            name=name,
+            overrides=overrides,
+        )
+        missile: Missile = Missile.from_dict(payload)
+        missile.target_id = None
+        missile.speed = float(payload.get("speed", 420.0))
+        missile.tags = tuple(dict.fromkeys((*missile.tags, "missile")))
         return missile
 
 
 @dataclass
 class Shelter(BaseEntity):
+    """Player shelter entity with staged damage textures."""
 
     damage: int = 0  # 0 = full, 1..9 damaged
     tex_full: int | None = None
     tex_damaged: list[int] = field(default_factory=list)  # len 9
 
     @staticmethod
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def build(
         entity_id: EntityId,
         name: str,
@@ -349,8 +525,33 @@ class Shelter(BaseEntity):
                 "sprite": {
                     "texture": tex_full,
                 },
+                "tags": ["shelter"],
             }
         )
         shelter.tex_full = tex_full
         shelter.tex_damaged = tex_damaged
+        shelter.tags = tuple(dict.fromkeys((*shelter.tags, "shelter")))
+        return shelter
+
+    @staticmethod
+    def build_from_template(
+        *,
+        template: dict[str, Any],
+        viewport: tuple[float, float],
+        entity_id: int,
+        name: str,
+        overrides: dict[str, Any] | None = None,
+    ) -> "Shelter":
+        """Build a shelter and cache its pristine and damaged textures."""
+        payload = _payload_from_template(
+            template,
+            viewport=viewport,
+            entity_id=entity_id,
+            name=name,
+            overrides=overrides,
+        )
+        shelter: Shelter = Shelter.from_dict(payload)
+        shelter.tex_full = payload.get("tex_full")
+        shelter.tex_damaged = list(payload.get("tex_damaged", []) or [])
+        shelter.tags = tuple(dict.fromkeys((*shelter.tags, "shelter")))
         return shelter

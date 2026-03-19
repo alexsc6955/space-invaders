@@ -49,6 +49,15 @@ disable = [
   "logging-fstring-interpolation",
   "too-few-public-methods",
   "fixme",
+  "duplicate-code",
+  "too-many-instance-attributes",
+  "too-many-locals",
+  "too-many-arguments",
+  "too-many-positional-arguments",
+  "too-many-lines",
+  "too-many-branches",
+  "too-many-statements",
+  "too-many-return-statements",
 ]
 
 [tool.pylint.MAIN]

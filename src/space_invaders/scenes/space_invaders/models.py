@@ -1,33 +1,69 @@
-"""
-Space Invaders Scene Models
-"""
+"""World, intent, and tick-context models for Space Invaders."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any
 
 from mini_arcade_core.engine.animation import Animation
+from mini_arcade_core.engine.entities import BaseEntity
 from mini_arcade_core.scenes.sim_scene import (  # pyright: ignore[reportMissingImports]
     BaseIntent,
     BaseTickContext,
     BaseWorld,
+    EntityIdDomain,
 )
 
 from space_invaders.entities import (
     Effect,
+    EntityId,
     ProjectileKind,
     ProjectileSpec,
 )
 
+if TYPE_CHECKING:
+    from space_invaders.scenes.space_invaders.spawn import (
+        AlienFormationSpec,
+        ShelterRowSpec,
+    )
+
 
 @dataclass
-class SpaceInvadersWorld(BaseWorld):
+class SpaceInvadersWorld(
+    BaseWorld
+):  # pylint: disable=too-many-instance-attributes
     """
     Space Invaders World
     """
 
+    entity_id_domains = {
+        "ship": EntityIdDomain(
+            start_id=int(EntityId.SHIP), end_id=int(EntityId.SHIP)
+        ),
+        "ufo": EntityIdDomain(
+            start_id=int(EntityId.UFO), end_id=int(EntityId.UFO)
+        ),
+        "alien": EntityIdDomain(
+            start_id=int(EntityId.ALIEN_START), end_id=int(EntityId.ALIEN_END)
+        ),
+        "bullet": EntityIdDomain(
+            start_id=int(EntityId.BULLET_START),
+            end_id=int(EntityId.BULLET_END),
+        ),
+        "missile": EntityIdDomain(
+            start_id=int(EntityId.MISSILE_START),
+            end_id=int(EntityId.MISSILE_END),
+        ),
+        "shelter": EntityIdDomain(
+            start_id=int(EntityId.SHELTER_START),
+            end_id=int(EntityId.SHELTER_END),
+        ),
+    }
     viewport: tuple[float, float]
     bullet_texture: int | None = None
+    entity_templates: dict[str, dict[str, Any]] = field(default_factory=dict)
+    alien_formation_spec: AlienFormationSpec | None = None
+    shelter_row_spec: ShelterRowSpec | None = None
     bullets: list[int] = field(default_factory=list)
     ship_fire_timer: float = 0.0
     ship_fire_cooldown: float = 0.20
@@ -92,9 +128,55 @@ class SpaceInvadersWorld(BaseWorld):
     shield_anim: Animation | None = None
     shield_scale: float = 1.35
 
+    def ship(self) -> BaseEntity | None:
+        """Return the player ship entity, if one is currently present."""
+        ship = self.find_entity(tag="ship")
+        if ship is not None:
+            return ship
+        entities = self.get_entities_in_domain("ship")
+        return entities[0] if entities else None
+
+    def ufo(self) -> BaseEntity | None:
+        """Return the active UFO bonus ship, if present."""
+        ufo = self.find_entity(tag="ufo")
+        if ufo is not None:
+            return ufo
+        entities = self.get_entities_in_domain("ufo")
+        return entities[0] if entities else None
+
+    def aliens(self) -> list[BaseEntity]:
+        """Return all alien entities in tag-first, domain-second order."""
+        aliens = self.get_entities_by_tag("alien")
+        if aliens:
+            return aliens
+        return self.get_entities_in_domain("alien")
+
+    def shelters(self) -> list[BaseEntity]:
+        """Return all shelter entities in tag-first, domain-second order."""
+        shelters = self.get_entities_by_tag("shelter")
+        if shelters:
+            return shelters
+        return self.get_entities_in_domain("shelter")
+
+    def bullet_entities(self) -> list[BaseEntity]:
+        """Return all bullet entities in tag-first, domain-second order."""
+        bullets = self.get_entities_by_tag("bullet")
+        if bullets:
+            return bullets
+        return self.get_entities_in_domain("bullet")
+
+    def missile_entities(self) -> list[BaseEntity]:
+        """Return all missile entities in tag-first, domain-second order."""
+        missiles = self.get_entities_by_tag("missile")
+        if missiles:
+            return missiles
+        return self.get_entities_in_domain("missile")
+
 
 @dataclass
-class SpaceInvadersIntent(BaseIntent):
+class SpaceInvadersIntent(
+    BaseIntent
+):  # pylint: disable=too-many-instance-attributes
     """
     Space Invaders Intent
     """

@@ -29,7 +29,7 @@ class SpaceInvadersMenuScene(BaseMenuScene):
             button_selected_border=(120, 255, 160, 255),
             normal=(220, 220, 220, 255),
             selected=(255, 255, 255, 255),
-            hint="ENTER start  ESC quit",
+            hint="ENTER start  ESC quit  F1 debug",
             hint_color=(170, 170, 170, 255),
         )
 

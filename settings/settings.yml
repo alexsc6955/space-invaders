@@ -1,0 +1,303 @@
+# Profile id: space-invaders
+# Source: games/space-invaders/src/space_invaders/app.py
+
+game:
+  id: space-invaders
+project:
+  root: ${settings_dir}/..
+  assets_root: ${project_root}/assets
+
+scene:
+  initial_scene: space_invaders_menu
+  scene_registry:
+    discover_packages:
+      - space_invaders.scenes
+      - mini_arcade_core.scenes
+
+engine_config:
+  fps: 60
+  virtual_resolution: [800, 600]
+  enable_profiler: false
+  postfx:
+    enabled: false
+    active: []
+
+backend:
+  provider: native
+  window:
+    width: 800
+    height: 600
+    title: Space Invaders (Native SDL2 + mini-arcade-core)
+    high_dpi: false
+    resizable: true
+  renderer:
+    background_color: [30, 30, 30]
+  audio:
+    enable: false
+  fonts:
+    - name: default
+      size: 24
+      path: ${assets_root}/fonts/pixel_arial_11/PIXEAB__.TTF
+
+gameplay:
+  debug_overlay:
+    enabled: true
+    title: Space Invaders Debug
+    sections: [timing, render, viewport, effects, stack, scene]
+  scenes:
+    space_invaders_menu:
+      escape:
+        command: quit
+    space_invaders_pause:
+      escape:
+        command: remove_scene
+    space_invaders:
+      entities:
+        templates:
+          ship:
+            name: Player Ship
+            transform:
+              size:
+                width: 40.0
+                height: 20.0
+              position:
+                x:
+                  anchor: center
+                y:
+                  anchor: bottom
+                  offset: 50.0
+            shape:
+              kind: rect
+            collider:
+              kind: rect
+            kinematic:
+              velocity:
+                vx: 0.0
+                vy: 0.0
+              acceleration:
+                ax: 0.0
+                ay: 0.0
+              max_speed: 300.0
+            sprite_path: ${assets_root}/sprites/player.png
+            ship_explosion_frame_paths:
+              - ${assets_root}/sprites/playerExplosionA.png
+              - ${assets_root}/sprites/playerExplosionB.png
+          alien:
+            transform:
+              size:
+                width: 30.0
+                height: 20.0
+            shape:
+              kind: rect
+            collider:
+              kind: rect
+            kinematic:
+              velocity:
+                vx: 0.0
+                vy: 0.0
+              acceleration:
+                ax: 0.0
+                ay: 0.0
+              max_speed: 50.0
+            anim:
+              fps: 5.0
+              loop: true
+          bullet:
+            transform:
+              size:
+                width: 4.0
+                height: 10.0
+            kinematic:
+              velocity:
+                vx: 0.0
+                vy: 0.0
+              acceleration:
+                ax: 0.0
+                ay: 0.0
+              max_speed: 400.0
+            sprite_path: ${assets_root}/sprites/Projectile_Player.png
+            life:
+              ttl: 5.0
+              alive: true
+          missile:
+            name: Missile
+            transform:
+              size:
+                width: 14.0
+                height: 22.0
+            shape:
+              kind: rect
+            collider:
+              kind: rect
+            kinematic:
+              velocity:
+                vx: 0.0
+                vy: -250.0
+              acceleration:
+                ax: 0.0
+                ay: 0.0
+              max_speed: 520.0
+            life:
+              ttl: 6.0
+              alive: true
+            speed: 520.0
+            frame_paths:
+              - ${assets_root}/sprites/missile_1.png
+              - ${assets_root}/sprites/missile_2.png
+              - ${assets_root}/sprites/missile_3.png
+              - ${assets_root}/sprites/missile_4.png
+            anim:
+              fps: 18.0
+              loop: true
+          ufo:
+            name: UFO
+            transform:
+              size:
+                width: 48.0
+                height: 22.0
+            shape:
+              kind: rect
+            collider:
+              kind: rect
+            kinematic:
+              velocity:
+                vx: 0.0
+                vy: 0.0
+              acceleration:
+                ax: 0.0
+                ay: 0.0
+              max_speed: 95.0
+            life:
+              alive: true
+            sprite_path: ${assets_root}/sprites/ufo.png
+            spawn_y: 36.0
+            spawn_margin: 64.0
+            spawn_timer: 5.0
+            spawn_min: 12.0
+            spawn_max: 20.0
+            points: 100
+          shelter:
+            transform:
+              size:
+                width: 60.0
+                height: 40.0
+            shape:
+              kind: rect
+            collider:
+              kind: rect
+            sprite_full_path: ${assets_root}/sprites/shelter_full.png
+            sprite_damaged_paths:
+              - ${assets_root}/sprites/shelterDamaged_1.png
+              - ${assets_root}/sprites/shelterDamaged_2.png
+              - ${assets_root}/sprites/shelterDamaged_3.png
+              - ${assets_root}/sprites/shelterDamaged_4.png
+              - ${assets_root}/sprites/shelterDamaged_5.png
+              - ${assets_root}/sprites/shelterDamaged_6.png
+              - ${assets_root}/sprites/shelterDamaged_7.png
+              - ${assets_root}/sprites/shelterDamaged_8.png
+              - ${assets_root}/sprites/shelterDamaged_9.png
+        projectile_specs:
+          A:
+            frame_paths:
+              - ${assets_root}/sprites/ProjectileA_1.png
+              - ${assets_root}/sprites/ProjectileA_2.png
+              - ${assets_root}/sprites/ProjectileA_3.png
+              - ${assets_root}/sprites/ProjectileA_4.png
+            fps: 15.0
+            speed: 400.0
+            size:
+              width: 6.0
+              height: 14.0
+          B:
+            frame_paths:
+              - ${assets_root}/sprites/ProjectileB_1.png
+              - ${assets_root}/sprites/ProjectileB_2.png
+              - ${assets_root}/sprites/ProjectileB_3.png
+              - ${assets_root}/sprites/ProjectileB_4.png
+            fps: 15.0
+            speed: 350.0
+            size:
+              width: 6.0
+              height: 14.0
+          C:
+            frame_paths:
+              - ${assets_root}/sprites/ProjectileC_1.png
+              - ${assets_root}/sprites/ProjectileC_2.png
+              - ${assets_root}/sprites/ProjectileC_3.png
+              - ${assets_root}/sprites/ProjectileC_4.png
+            fps: 15.0
+            speed: 300.0
+            size:
+              width: 6.0
+              height: 14.0
+        alien_grid:
+          rows: 5
+          cols: 12
+          start:
+            x: 80.0
+            y: 60.0
+          spacing:
+            x: 56.0
+            y: 46.0
+          fire_cd:
+            base: 2.0
+            span: 3.0
+          row_frame_paths:
+            -
+              - ${assets_root}/sprites/invaderS1.png
+              - ${assets_root}/sprites/invaderS2.png
+            -
+              - ${assets_root}/sprites/invaderM1.png
+              - ${assets_root}/sprites/invaderM2.png
+            -
+              - ${assets_root}/sprites/invaderM1.png
+              - ${assets_root}/sprites/invaderM2.png
+            -
+              - ${assets_root}/sprites/invaderL1.png
+              - ${assets_root}/sprites/invaderL2.png
+            -
+              - ${assets_root}/sprites/invaderL1.png
+              - ${assets_root}/sprites/invaderL2.png
+        shelters:
+          count: 4
+          bottom_offset: 150.0
+  controls:
+    space_invaders:
+      bindings:
+        move_ship_x:
+          type: axis
+          positive_keys: [RIGHT]
+          negative_keys: [LEFT]
+        fire_bullet:
+          type: digital
+          keys: [SPACE]
+        fire_omega_ray:
+          type: digital
+          keys: [O]
+        toggle_missile_target:
+          type: digital
+          keys: [T]
+        missile_target_left:
+          type: digital
+          keys: [A]
+        missile_target_right:
+          type: digital
+          keys: [D]
+        missile_target_up:
+          type: digital
+          keys: [W]
+        missile_target_down:
+          type: digital
+          keys: [S]
+        missile_launch:
+          type: digital
+          keys: [M]
+        shield_toggle:
+          type: digital
+          keys: [C]
+        ship_kill_switch:
+          type: digital
+          keys: [K]
+        pause:
+          type: digital
+          keys: [ESCAPE]

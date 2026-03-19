@@ -32,7 +32,7 @@ class SpaceInvadersPauseScene(BaseMenuScene):
             button_selected_border=(120, 255, 160, 255),
             normal=(225, 225, 225, 255),
             selected=(255, 255, 255, 255),
-            hint="ENTER select  ESC resume",
+            hint="ENTER select  ESC resume  F1 debug",
             hint_color=(180, 180, 180, 255),
         )
 
@@ -42,6 +42,3 @@ class SpaceInvadersPauseScene(BaseMenuScene):
             MenuItem("restart", "RESTART", RestartSpaceInvadersCommand),
             MenuItem("menu", "MAIN MENU", BackToMenuCommand),
         ]
-
-    def quit_command(self):
-        return ResumeSpaceInvadersCommand()

@@ -1,3 +1,5 @@
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+
 """
 Space Invaders Scene Helpers
 """
@@ -6,32 +8,8 @@ from __future__ import annotations
 
 from mini_arcade_core.spaces.geometry.bounds import Position2D, Size2D
 
-from space_invaders.entities import (
-    Alien,
-    Effect,
-    EntityId,
-)
-from space_invaders.scenes.space_invaders.models import (
-    SpaceInvadersWorld,
-)
-
-
-def alloc_entity_id_in_range(
-    world: SpaceInvadersWorld,
-    start: EntityId,
-    end: EntityId,
-) -> int | None:
-    """
-    Allocate the first free entity id in [start, end].
-    Returns None when the range is exhausted.
-    """
-    start_id = int(start)
-    end_id = int(end)
-    used_ids = {e.id for e in world.entities if start_id <= e.id <= end_id}
-    for candidate in range(start_id, end_id + 1):
-        if candidate not in used_ids:
-            return candidate
-    return None
+from space_invaders.entities import Alien, Effect
+from space_invaders.scenes.space_invaders.models import SpaceInvadersWorld
 
 
 def spawn_effect(
@@ -43,6 +21,7 @@ def spawn_effect(
     h: float,
     ttl: float = 0.12,
 ):
+    """Append a transient overlay effect when a valid texture is available."""
     if texture is None:
         return
     world.effects.append(
@@ -60,6 +39,24 @@ def is_round_locked(world: SpaceInvadersWorld) -> bool:
     return bool(world.game_over or world.victory)
 
 
+def is_entity_alive(entity: object) -> bool:
+    """Resolve alive state from ``life.alive`` or a plain ``alive`` flag."""
+    life = getattr(entity, "life", None)
+    if life is not None:
+        return bool(getattr(life, "alive", True))
+    return bool(getattr(entity, "alive", True))
+
+
+def mark_entity_dead(entity: object) -> None:
+    """Mark an entity dead when it exposes a life component or alive flag."""
+    life = getattr(entity, "life", None)
+    if life is not None:
+        setattr(life, "alive", False)
+        return
+    if hasattr(entity, "alive"):
+        setattr(entity, "alive", False)
+
+
 def alien_points(alien: Alien) -> int:
     """Classic-ish scoring tiers by alien row."""
     row = int(getattr(alien, "row", 0))
@@ -67,5 +64,4 @@ def alien_points(alien: Alien) -> int:
         return 30
     if row <= 2:
         return 20
-    return 10
     return 10
